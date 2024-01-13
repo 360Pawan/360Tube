@@ -21,19 +21,23 @@ const registerUser = asyncHandler(async (request, response) => {
     throw new ApiError(401, "😰 User with email and username already existed.");
   }
 
-  console.log("FILES", request.files);
-
   const avatarLocalPath = request.files?.avatar[0]?.path;
-  const coverImageLocalPath = request.files?.coverImage[0]?.path;
+  let coverImageLocalPath;
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "😰 Avatar is required.");
   }
 
+  if (
+    request.files &&
+    Array.isArray(request.files.coverImage) &&
+    request.files.coverImage[0].path
+  ) {
+    coverImageLocalPath = request.files?.coverImage[0]?.path;
+  }
+
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-
-  console.log("avatar", avatar);
 
   if (!avatar) {
     throw new ApiError(400, "😰 Avatar is required.");
@@ -42,19 +46,15 @@ const registerUser = asyncHandler(async (request, response) => {
   const user = await User.create({
     username,
     email,
-    firstName,
+    fullName,
     password,
     avatar: avatar.url,
-    coverImage: coverImage.url ?? "",
+    coverImage: coverImage?.url ?? "",
   });
 
-  console.log("USER", user);
-
   const createdUser = await User.findById(user._id).select(
-    "-password refreshToken"
+    "-password -refreshToken"
   );
-
-  console.log("USER without cred", createdUser);
 
   if (!createdUser) {
     throw new ApiError(
@@ -65,7 +65,9 @@ const registerUser = asyncHandler(async (request, response) => {
 
   return response
     .status(201)
-    .json(ApiResponse(200, createdUser, "👍 User registered Successfully."));
+    .json(
+      new ApiResponse(200, createdUser, "👍 User registered Successfully.")
+    );
 });
 
 export { registerUser };
