@@ -29,4 +29,12 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-export { uploadOnCloudinary };
+const removeFromCloudinary = async (url) => {
+  const idRegex = /\/v\d+\/([a-z\d]+)\./;
+
+  const publicId = idRegex.exec(url)[1];
+
+  await cloudinary.uploader.destroy(publicId);
+};
+
+export { uploadOnCloudinary, removeFromCloudinary };
