@@ -4,7 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-export const verifyJWT = asyncHandler(async (request, _, next) => {
+export const verifyJWT = asyncHandler(async (request, response, next) => {
   try {
     const accessToken =
       request.cookies?.accessToken ||
@@ -12,6 +12,7 @@ export const verifyJWT = asyncHandler(async (request, _, next) => {
 
     if (!accessToken) {
       throw new ApiError(401, "😰 Unauthorized request.");
+      // response.status(401).json(new ApiError(401, "😰 Unauthorized request."));
     }
 
     const decodedToken = jwt.verify(
