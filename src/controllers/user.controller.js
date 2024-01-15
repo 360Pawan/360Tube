@@ -24,7 +24,11 @@ const generateAccessAndRefreshToken = async (userId) => {
 
     return { accessToken, refreshToken };
   } catch (error) {
-    throw new ApiError(500, "😰 Something went wrong while generating tokens.");
+    response
+      .status(500)
+      .json(
+        new ApiError(500, "😰 Something went wrong while generating tokens.")
+      );
   }
 };
 
@@ -32,11 +36,11 @@ const registerUser = asyncHandler(async (request, response) => {
   const { username, email, fullName, password } = request.body;
 
   if ([username, email, fullName, password].some((field) => !field)) {
-    throw new ApiError(400, "😰 All fields are required.");
+    response.status(400).json(new ApiError(400, "😰 All fields are required."));
   }
 
   if (!validateEmail(email)) {
-    throw new ApiError(400, "😰 Email is not valid.");
+    response.status(400).json(new ApiError(400, "😰 Email is not valid."));
   }
 
   const existedUser = await User.findOne({
@@ -44,7 +48,11 @@ const registerUser = asyncHandler(async (request, response) => {
   });
 
   if (existedUser) {
-    throw new ApiError(401, "😰 User with email and username already existed.");
+    response
+      .status(401)
+      .json(
+        new ApiError(401, "😰 User with email and username already existed.")
+      );
   }
 
   let avatarLocalPath, coverImageLocalPath;
@@ -56,7 +64,7 @@ const registerUser = asyncHandler(async (request, response) => {
   ) {
     avatarLocalPath = request.files?.avatar[0]?.path;
   } else {
-    throw new ApiError(400, "😰 Avatar is required.");
+    response.status(400).json(new ApiError(400, "😰 Avatar is required."));
   }
 
   if (
@@ -71,7 +79,7 @@ const registerUser = asyncHandler(async (request, response) => {
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!avatar) {
-    throw new ApiError(400, "😰 Avatar is required.");
+    response.status(500).json(new ApiError(500, "😰 Error uploading avatar."));
   }
 
   const user = await User.create({
@@ -88,10 +96,11 @@ const registerUser = asyncHandler(async (request, response) => {
   );
 
   if (!createdUser) {
-    throw new ApiError(
-      500,
-      "😰 Something went wrong while registering the user."
-    );
+    response
+      .status(500)
+      .json(
+        new ApiError(500, "😰 Something went wrong while registering the user.")
+      );
   }
 
   return response
@@ -105,11 +114,13 @@ const loginUser = asyncHandler(async (request, response) => {
   const { email, username, password } = request.body;
 
   if (!(email || username)) {
-    throw new ApiError(400, "😰 Email or username is required.");
+    response
+      .status(400)
+      .json(new ApiError(400, "😰 Email or username is required."));
   } else if (email && !validateEmail(email)) {
-    throw new ApiError(400, "😰 Email is not valid.");
+    response.status(400).json(new ApiError(400, "😰 Email is not valid."));
   } else if (!password) {
-    throw new ApiError(400, "😰 Password is required.");
+    response.status(400).json(new ApiError(400, "😰 Password is required."));
   }
 
   const user = await User.findOne({
@@ -117,13 +128,13 @@ const loginUser = asyncHandler(async (request, response) => {
   });
 
   if (!user) {
-    throw new ApiError(404, "😰 User does not exist.");
+    response.status(404).json(new ApiError(404, "😰 User does not exist."));
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    throw new ApiError(401, "😰 password is not valid.");
+    response.status(401).json(new ApiError(401, "😰 password is not valid."));
   }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
@@ -169,7 +180,7 @@ const refreshAccessToken = asyncHandler(async (request, response) => {
       request.cookies?.refreshToken || request.body.refreshToken;
 
     if (!incomingRefreshToken) {
-      throw new ApiError(401, "😰 Unauthorized request.");
+      response.status(401).json(new ApiError(401, "😰 Unauthorized request."));
     }
 
     const decodedToken = jwt.verify(
@@ -179,11 +190,13 @@ const refreshAccessToken = asyncHandler(async (request, response) => {
     const user = await User.findById(decodedToken._id);
 
     if (!user) {
-      throw new ApiError(401, "😰 Invalid refresh token.");
+      response.status(401).json(new ApiError(401, "😰 Invalid refresh token."));
     }
 
     if (incomingRefreshToken !== user?.refreshToken) {
-      throw new ApiError(401, "😰 Refresh token is expired.");
+      response
+        .status(401)
+        .json(new ApiError(401, "😰 Refresh token is expired."));
     }
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
@@ -202,7 +215,11 @@ const refreshAccessToken = asyncHandler(async (request, response) => {
         )
       );
   } catch (error) {
-    throw new ApiError(401, error?.message || "😰 Refresh token is expired.");
+    response
+      .status(401)
+      .json(
+        new ApiError(401, error?.message || "😰 Refresh token is expired.")
+      );
   }
 });
 
@@ -210,14 +227,16 @@ const changePassword = asyncHandler(async (request, response) => {
   const { oldPassword, newPassword } = request.body;
 
   if (!oldPassword || !newPassword) {
-    throw new ApiError(400, "😰 All fields required.");
+    response.status(400).json(new ApiError(400, "😰 All fields required."));
   }
 
   const user = await User.findById(request.user._id);
   const isPasswordValid = await user.isPasswordCorrect(oldPassword);
 
   if (!isPasswordValid) {
-    throw new ApiError(400, "😰 Old password is not correct.");
+    response
+      .status(400)
+      .json(new ApiError(400, "😰 Old password is not correct."));
   }
 
   user.password = newPassword;
@@ -244,11 +263,11 @@ const updateAccountDetails = asyncHandler(async (request, response) => {
   const { email, fullName } = request.body;
 
   if ((!email, !fullName)) {
-    throw new ApiError(400, "😰 All fields required.");
+    response.status(400).json(new ApiError(400, "😰 All fields required."));
   }
 
   if (email && !validateEmail(email)) {
-    throw new ApiError(400, "😰 Email is not valid.");
+    response.status(400).json(new ApiError(400, "😰 Email is not valid."));
   }
 
   const user = await User.findByIdAndUpdate(
@@ -273,13 +292,15 @@ const updateUserAvatar = asyncHandler(async (request, response) => {
   if (request.file && request.file.path) {
     avatarLocalPath = request.file.path;
   } else {
-    throw new ApiError(400, "😰 Avatar is required.");
+    response.status(400).json(new ApiError(400, "😰 Avatar is required."));
   }
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
 
   if (!avatar) {
-    throw new ApiError(500, "😰 Error while uploading avatar.");
+    response
+      .status(500)
+      .json(new ApiError(500, "😰 Error while uploading avatar."));
   }
 
   if (request.user.avatar) {
@@ -307,13 +328,15 @@ const updateUserCoverImage = asyncHandler(async (request, response) => {
   if (request.file && request.file.path) {
     coverImageLocalPath = request.file.path;
   } else {
-    throw new ApiError(400, "😰 Cover image is required.");
+    response.status(400).json(new ApiError(400, "😰 Cover image is required."));
   }
 
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
   if (!coverImage) {
-    throw new ApiError(500, "😰 Error while uploading cover image.");
+    response
+      .status(500)
+      .json(new ApiError(500, "😰 Error while uploading cover image."));
   }
 
   if (request.user.coverImage) {
@@ -339,7 +362,7 @@ const getUserChannelProfile = asyncHandler(async (request, response) => {
   const { username } = request.params;
 
   if (!username?.trim()) {
-    throw new ApiError(400, "😰 Username is missing.");
+    response.status(400).json(new ApiError(400, "😰 Username is missing."));
   }
 
   const channel = await User.aggregate([
@@ -395,10 +418,8 @@ const getUserChannelProfile = asyncHandler(async (request, response) => {
     },
   ]);
 
-  console.log(channel);
-
   if (!channel?.length) {
-    throw new ApiError(404, "😰 Channel does not exists");
+    response.status(404).json(new ApiError(404, "😰 Channel does not exists"));
   }
 
   response
