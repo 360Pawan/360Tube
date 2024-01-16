@@ -11,7 +11,9 @@ export const verifyJWT = asyncHandler(async (request, response, next) => {
       request.header("Authorization")?.replace("Bearer ", "");
 
     if (!accessToken) {
-      response.status(401).json(new ApiError(401, "😰 Unauthorized request."));
+      return response
+        .status(401)
+        .json(new ApiError(401, "😰 Unauthorized request."));
     }
 
     const decodedToken = jwt.verify(
@@ -24,13 +26,15 @@ export const verifyJWT = asyncHandler(async (request, response, next) => {
     );
 
     if (!user) {
-      response.status(401).json(new ApiError(401, "😰 Invalid access token"));
+      return response
+        .status(401)
+        .json(new ApiError(401, "😰 Invalid access token"));
     }
 
     request.user = user;
     next();
   } catch (error) {
-    response
+    return response
       .status(401)
       .json(new ApiError(401, error?.message || "😰 Invalid access token"));
   }

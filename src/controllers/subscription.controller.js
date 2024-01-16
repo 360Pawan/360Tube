@@ -10,13 +10,15 @@ const toggleSubscription = asyncHandler(async (request, response) => {
   const { channelId } = request.params;
 
   if (!channelId?.trim() || !isValidObjectId(channelId?.trim())) {
-    response.status(400).json(new ApiError(400, "😰 Channel id is not valid."));
+    return response
+      .status(400)
+      .json(new ApiError(400, "😰 Channel id is not valid."));
   }
 
   const channel = await User.findById(channelId);
 
   if (!channel) {
-    response.status(404).json(new ApiError(404, "😰 No channel found."));
+    return response.status(404).json(new ApiError(404, "😰 No channel found."));
   }
 
   const isAlreadySubscribed = await Subscription.findOne({
@@ -31,7 +33,7 @@ const toggleSubscription = asyncHandler(async (request, response) => {
     });
 
     if (!subscribedDoc) {
-      response
+      return response
         .status(500)
         .json(new ApiError(500, "😰 Something went wrong while subscribing."));
     }
@@ -45,7 +47,7 @@ const toggleSubscription = asyncHandler(async (request, response) => {
     });
 
     if (deleteDoc.deletedCount !== 1) {
-      response
+      return response
         .status(500)
         .json(new ApiError(500, "😰 Error unsubscribing channel.."));
     }
@@ -90,7 +92,6 @@ const getUserChannelSubscribers = asyncHandler(async (request, response) => {
     );
 });
 
-// controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (request, response) => {
   const subscribedTo = await Subscription.aggregate([
     {

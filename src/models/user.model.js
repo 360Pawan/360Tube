@@ -26,11 +26,12 @@ const userSchema = Schema(
       index: true,
     },
     avatar: {
-      type: String,
-      required: true,
+      url: { type: String, required: true },
+      publicId: { type: String, required: true },
     },
     coverImage: {
-      type: String,
+      url: { type: String },
+      publicId: { type: String },
     },
     watchHistory: [
       {
@@ -46,7 +47,7 @@ const userSchema = Schema(
       type: String,
     },
   },
-  { timeStamps: true }
+  { timestamps: true }
 );
 
 userSchema.pre("save", async function (next) {
