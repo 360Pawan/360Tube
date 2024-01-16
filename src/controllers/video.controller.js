@@ -138,6 +138,10 @@ const getAllVideos = asyncHandler(async (request, response) => {
 
   const videos = await Video.aggregate(pipeline);
 
+  if (videos.length < 1) {
+    return response.status(404).json(new ApiError(404, "😰 No videos found"));
+  }
+
   response
     .status(200)
     .json(new ApiResponse(200, videos, "👍 Videos fetched successfully."));
