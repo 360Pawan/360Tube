@@ -277,7 +277,7 @@ const deleteVideo = asyncHandler(async (request, response) => {
   } else {
     return response
       .status(500)
-      .json(new ApiError(500, "👍 Error deleting video."));
+      .json(new ApiError(500, "😰 Error deleting video."));
   }
 });
 
