@@ -207,6 +207,12 @@ const updateVideo = asyncHandler(async (request, response) => {
     return response.status(404).json(new ApiError(404, "😰 No video found"));
   }
 
+  if (!video.owner.equals(request.user._id)) {
+    return response
+      .status(401)
+      .json(new ApiError(401, "😰 You cannot update this video."));
+  }
+
   let thumbnailLocalPath, thumbnail;
 
   if (request.file && request.file.path) {
@@ -265,6 +271,12 @@ const deleteVideo = asyncHandler(async (request, response) => {
     return response.status(404).json(new ApiError(404, "😰 No video found"));
   }
 
+  if (!video.owner.equals(request.user._id)) {
+    return response
+      .status(401)
+      .json(new ApiError(401, "😰 You cannot delete this video."));
+  }
+
   await removeFromCloudinary(video.videoFile.publicId, "video");
   await removeFromCloudinary(video.thumbnail.publicId, "image");
 
@@ -294,6 +306,12 @@ const togglePublishStatus = asyncHandler(async (request, response) => {
 
   if (!video) {
     return response.status(404).json(new ApiError(404, "😰 No video found"));
+  }
+
+  if (!video.owner.equals(request.user._id)) {
+    return response
+      .status(401)
+      .json(new ApiError(401, "😰 You cannot publish this video."));
   }
 
   video.isPublished = !video.isPublished;

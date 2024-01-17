@@ -102,6 +102,12 @@ const updateTweet = asyncHandler(async (request, response) => {
     return response.status(404).json(new ApiError(404, "😰 No tweet found."));
   }
 
+  if (!tweet.owner.equals(request.user._id)) {
+    return response
+      .status(401)
+      .json(new ApiError(401, "😰 You cannot update this tweet."));
+  }
+
   tweet.content = content;
   const updatedTweet = await tweet.save({ new: true });
 
@@ -129,6 +135,12 @@ const deleteTweet = asyncHandler(async (request, response) => {
 
   if (!tweet) {
     return response.status(404).json(new ApiError(404, "😰 No tweet found."));
+  }
+
+  if (!tweet.owner.equals(request.user._id)) {
+    return response
+      .status(401)
+      .json(new ApiError(401, "😰 You cannot delete this video."));
   }
 
   const deletedTweet = await Tweet.deleteOne({ _id: tweetId });
