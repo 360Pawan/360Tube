@@ -204,13 +204,7 @@ const getLikedVideos = asyncHandler(async (request, response) => {
     {
       $unwind: "$video",
     },
-    {
-      $project: {
-        video: 1,
-        createdAt: 1,
-        updatedAt: 1,
-      },
-    },
+    { $replaceRoot: { newRoot: "$video" } },
   ]);
 
   if (likedVideos.length < 1) {
