@@ -54,7 +54,7 @@ const getChannelStats = asyncHandler(async (request, response) => {
         totalVideoLikes: videoData[0]?.totalVideoLikes ?? 0,
         subscribers: subscribers,
       },
-      "👍 Stats fetched successfully.."
+      "👍 User Stats fetched successfully.."
     )
   );
 });
