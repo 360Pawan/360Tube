@@ -1,8 +1,29 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-const userSchema = Schema(
+interface IUser extends Document {
+  username: string;
+  email: string;
+  fullName: string;
+  avatar: {
+    url: string;
+    publicId: string;
+  };
+  coverImage: {
+    url?: string;
+    publicId?: string;
+  };
+  watchHistory: mongoose.Types.ObjectId[];
+  password: string;
+  refreshToken?: string;
+
+  isPasswordCorrect(password: string): Promise<boolean>;
+  generateAccessToken(): string;
+  generateRefreshToken(): string;
+}
+
+const userSchema = new Schema(
   {
     username: {
       type: String,
@@ -88,4 +109,4 @@ userSchema.methods.generateRefreshToken = function () {
   );
 };
 
-export const User = mongoose.model("User", userSchema);
+export const User = mongoose.model<IUser>("User", userSchema);

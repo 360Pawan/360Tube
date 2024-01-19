@@ -1,18 +1,18 @@
-import jwt from "jsonwebtoken";
-
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { User } from "../models/user.model.js";
-import {
-  removeFromCloudinary,
-  uploadOnCloudinary,
-} from "../utils/cloudinary.js";
-import { validateEmail } from "../utils/validation.js";
-import { SERVER_COOKIE_OPTION } from "../constants.js";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
+import { Request, Response } from "express";
 
-const generateAccessAndRefreshToken = async (userId) => {
+import { asyncHandler } from "@/utils/asyncHandler";
+import { ApiError } from "@/utils/ApiError";
+import { ApiResponse } from "@/utils/ApiResponse";
+import { User } from "@/models/user.model";
+import { validateEmail } from "@/utils/validation";
+import { SERVER_COOKIE_OPTION } from "@/constants";
+import { removeFromCloudinary, uploadOnCloudinary } from "@/utils/cloudinary";
+
+const generateAccessAndRefreshToken = async (
+  userId: mongoose.Types.ObjectId
+): Promise<{ accessToken: string; refreshToken: string }> => {
   try {
     const user = await User.findById(userId);
 
@@ -24,11 +24,9 @@ const generateAccessAndRefreshToken = async (userId) => {
 
     return { accessToken, refreshToken };
   } catch (error) {
-    return response
-      .status(500)
-      .json(
-        new ApiError(500, "😰 Something went wrong while generating tokens.")
-      );
+    return Promise.reject(
+      new ApiError(500, "😰 Something went wrong while generating tokens.")
+    );
   }
 };
 
@@ -211,7 +209,14 @@ const refreshAccessToken = asyncHandler(async (request, response) => {
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
-    const user = await User.findById(decodedToken._id);
+
+    if (typeof decodedToken !== "object" || !decodedToken._id) {
+      return response
+        .status(401)
+        .json(new ApiError(401, "😰 Invalid refresh token."));
+    }
+
+    const user = await User.findById(decodedToken?._id);
 
     if (!user) {
       return response
@@ -290,7 +295,7 @@ const getCurrentUser = asyncHandler(async (request, response) => {
 const updateAccountDetails = asyncHandler(async (request, response) => {
   const { email, fullName } = request.body;
 
-  if ((!email, !fullName)) {
+  if (!email || !fullName) {
     return response
       .status(400)
       .json(new ApiError(400, "😰 All fields required."));

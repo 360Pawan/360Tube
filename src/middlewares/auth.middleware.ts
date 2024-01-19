@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken";
 
-import { ApiError } from "../utils/ApiError.js";
-import { User } from "../models/user.model.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "@/utils/ApiError";
+import { User } from "@/models/user.model";
+import { asyncHandler } from "@/utils/asyncHandler";
 
 export const verifyJWT = asyncHandler(async (request, response, next) => {
   try {
@@ -20,6 +20,12 @@ export const verifyJWT = asyncHandler(async (request, response, next) => {
       accessToken,
       process.env.ACCESS_TOKEN_SECRET
     );
+
+    if (typeof decodedToken !== "object" || !decodedToken._id) {
+      return response
+        .status(401)
+        .json(new ApiError(401, "😰 Invalid refresh token."));
+    }
 
     const user = await User.findById(decodedToken._id).select(
       "-password -refreshToken"
