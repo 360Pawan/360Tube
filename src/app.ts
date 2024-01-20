@@ -16,8 +16,8 @@ app.use(cookieParser());
 
 // Routes declaration
 import userRouter from "@/routes/user.routes";
-// import subscriptionRouter from "@/routes/subscription.routes";
-// import videoRouter from "@/routes/video.routes";
+import subscriptionRouter from "@/routes/subscription.routes";
+import videoRouter from "@/routes/video.routes";
 // import tweetRouter from "@/routes/tweet.routes";
 // import commentRouter from "@/routes/comment.routes";
 // import likeRouter from "@/routes/like.routes";
@@ -26,8 +26,8 @@ import userRouter from "@/routes/user.routes";
 // import healthRouter from "@/routes/healthcheck.routes";
 
 app.use("/api/v1/users", userRouter);
-// app.use("/api/v1/subscriptions", subscriptionRouter);
-// app.use("/api/v1/videos", videoRouter);
+app.use("/api/v1/subscriptions", subscriptionRouter);
+app.use("/api/v1/videos", videoRouter);
 // app.use("/api/v1/tweets", tweetRouter);
 // app.use("/api/v1/comments", commentRouter);
 // app.use("/api/v1/likes", likeRouter);

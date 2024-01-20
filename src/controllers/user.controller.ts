@@ -20,7 +20,7 @@ const generateAccessAndRefreshToken = async (
     const refreshToken = user.generateRefreshToken();
 
     user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
+    await user.save();
 
     return { accessToken, refreshToken };
   } catch (error) {

@@ -1,12 +1,10 @@
 import mongoose, { isValidObjectId } from "mongoose";
-import { Video } from "../models/video.model.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import {
-  removeFromCloudinary,
-  uploadOnCloudinary,
-} from "../utils/cloudinary.js";
+
+import { Video } from "@/models/video.model";
+import { ApiError } from "@/utils/ApiError";
+import { ApiResponse } from "@/utils/ApiResponse";
+import { asyncHandler } from "@/utils/asyncHandler";
+import { removeFromCloudinary, uploadOnCloudinary } from "@/utils/cloudinary";
 
 const publishAVideo = asyncHandler(async (request, response) => {
   const { title, description } = request.body;
@@ -201,6 +199,12 @@ const updateVideo = asyncHandler(async (request, response) => {
       .json(new ApiError(400, "😰 Not a valid video id."));
   }
 
+  if ([title, description].some((field) => !field)) {
+    return response
+      .status(400)
+      .json(new ApiError(400, "😰 All fields are required."));
+  }
+
   const video = await Video.findById(videoId);
 
   if (!video) {
@@ -213,19 +217,54 @@ const updateVideo = asyncHandler(async (request, response) => {
       .json(new ApiError(401, "😰 You cannot update this video."));
   }
 
-  let thumbnailLocalPath, thumbnail;
+  video.title = title ?? video.title;
+  video.description = description ?? video.description;
 
-  if (request.file && request.file.path) {
-    thumbnailLocalPath = request.file.path;
+  const updatedVideo = await video.save();
 
-    thumbnail = await uploadOnCloudinary(
-      thumbnailLocalPath,
-      "/videos/thumbnails"
-    );
-    await removeFromCloudinary(video.thumbnail.publicId, "image");
-  } else {
-    thumbnail = video.thumbnail;
+  if (!updatedVideo) {
+    return response
+      .status(500)
+      .json(new ApiError(500, "😰 Error updating video."));
   }
+
+  return response
+    .status(200)
+    .json(new ApiResponse(200, updatedVideo, "👍 Video updated successfully."));
+});
+
+const updateVideoThumbnail = asyncHandler(async (request, response) => {
+  const { videoId } = request.params;
+
+  if (!videoId || !isValidObjectId(videoId)) {
+    return response
+      .status(400)
+      .json(new ApiError(400, "😰 Not a valid video id."));
+  }
+
+  if (!request.file || !request.file.path) {
+    return response
+      .status(400)
+      .json(new ApiError(400, "😰Thumbnail is required."));
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    return response.status(404).json(new ApiError(404, "😰 No video found"));
+  }
+
+  if (!video.owner.equals(request.user._id)) {
+    return response
+      .status(401)
+      .json(new ApiError(401, "😰 You cannot update this video."));
+  }
+
+  const thumbnail = await uploadOnCloudinary(
+    request.file.path,
+    "/videos/thumbnails"
+  );
+  await removeFromCloudinary(video.thumbnail.publicId, "image");
 
   if (!thumbnail?.url) {
     return response
@@ -233,22 +272,17 @@ const updateVideo = asyncHandler(async (request, response) => {
       .json(new ApiError(500, "😰 Error uploading thumbnail."));
   }
 
-  video.title = title ?? video.title;
-  video.description = description ?? video.description;
   video.thumbnail = {
     url: thumbnail.url ?? video.thumbnail.url,
     publicId: thumbnail.public_id ?? video.thumbnail.publicId,
   };
 
-  const updatedVideo = await video.save(
-    { validateBeforeSave: false },
-    { new: true }
-  );
+  const updatedVideo = await video.save();
 
   if (!updatedVideo) {
     return response
       .status(500)
-      .json(new ApiError(500, "😰 Error updating video."));
+      .json(new ApiError(500, "😰 Error updating thumbnail."));
   }
 
   return response
@@ -315,10 +349,7 @@ const togglePublishStatus = asyncHandler(async (request, response) => {
   }
 
   video.isPublished = !video.isPublished;
-  const updatedVideo = await video.save(
-    { validateBeforeSave: false },
-    { new: true }
-  );
+  const updatedVideo = await video.save();
 
   if (!updatedVideo) {
     return response
@@ -342,6 +373,7 @@ export {
   publishAVideo,
   getVideoById,
   updateVideo,
+  updateVideoThumbnail,
   deleteVideo,
   togglePublishStatus,
 };

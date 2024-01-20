@@ -109,7 +109,7 @@ const updateTweet = asyncHandler(async (request, response) => {
   }
 
   tweet.content = content;
-  const updatedTweet = await tweet.save({ new: true });
+  const updatedTweet = await tweet.save();
 
   if (!updatedTweet) {
     return response

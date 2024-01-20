@@ -132,7 +132,7 @@ const updateComment = asyncHandler(async (request, response) => {
   }
 
   comment.content = content;
-  const updatedComment = await comment.save({ new: true });
+  const updatedComment = await comment.save();
 
   if (!updatedComment) {
     return response

@@ -1,11 +1,11 @@
 import { Router } from "express";
 
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyJWT } from "@/middlewares/auth.middleware";
 import {
   getSubscribedChannels,
   getUserChannelSubscribers,
   toggleSubscription,
-} from "../controllers/subscription.controller.js";
+} from "@/controllers/subscription.controller";
 
 const router = Router();
 router.use(verifyJWT);

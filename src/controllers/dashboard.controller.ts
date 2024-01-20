@@ -43,7 +43,7 @@ const getChannelStats = asyncHandler(async (request, response) => {
 
   const subscribers = await Subscription.find({
     channel: new mongoose.Types.ObjectId(request.user._id),
-  }).count();
+  }).countDocuments();
 
   return response.status(200).json(
     new ApiResponse(

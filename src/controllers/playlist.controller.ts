@@ -186,7 +186,7 @@ const addVideoToPlaylist = asyncHandler(async (request, response) => {
   }
 
   playList.videos.push(video._id);
-  const updatedPlaylist = await playList.save({ new: true });
+  const updatedPlaylist = await playList.save();
 
   if (!updatedPlaylist) {
     return response
@@ -245,7 +245,7 @@ const removeVideoFromPlaylist = asyncHandler(async (request, response) => {
   const updatedList = playList.videos.filter((id) => !id.equals(videoId));
 
   playList.videos = updatedList;
-  const updatedPlaylist = await playList.save({ new: true });
+  const updatedPlaylist = await playList.save();
 
   if (!updatedPlaylist) {
     return response
@@ -326,7 +326,7 @@ const updatePlaylist = asyncHandler(async (request, response) => {
 
   playList.name = name;
   playList.description = description;
-  const updatedPlaylist = await playList.save({ new: true });
+  const updatedPlaylist = await playList.save();
 
   if (!updatedPlaylist) {
     return response
