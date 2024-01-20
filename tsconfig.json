@@ -11,6 +11,7 @@
     },
     "esModuleInterop": true
   },
+  "files": ["custom.d.ts"],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
 }

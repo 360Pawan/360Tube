@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import mongoose, { isValidObjectId } from "mongoose";
 
 import { ApiError } from "@/utils/ApiError";
@@ -6,91 +7,103 @@ import { User } from "@/models/user.model";
 import { asyncHandler } from "@/utils/asyncHandler";
 import { Subscription } from "@/models/subscription.model";
 
-const toggleSubscription = asyncHandler(async (request, response) => {
-  const { channelId } = request.params;
+const toggleSubscription = asyncHandler(
+  async (request: Request, response: Response) => {
+    const { channelId } = request.params;
 
-  if (!channelId?.trim() || !isValidObjectId(channelId?.trim())) {
-    return response
-      .status(400)
-      .json(new ApiError(400, "😰 Channel id is not valid."));
-  }
+    if (!channelId?.trim() || !isValidObjectId(channelId?.trim())) {
+      return response
+        .status(400)
+        .json(new ApiError(400, "😰 Channel id is not valid."));
+    }
 
-  const channel = await User.findById(channelId);
+    const channel = await User.findById(channelId);
 
-  if (!channel) {
-    return response.status(404).json(new ApiError(404, "😰 No channel found."));
-  }
+    if (!channel) {
+      return response
+        .status(404)
+        .json(new ApiError(404, "😰 No channel found."));
+    }
 
-  const isAlreadySubscribed = await Subscription.findOne({
-    subscriber: request.user._id,
-    channel: channel._id,
-  });
-
-  if (!isAlreadySubscribed) {
-    const subscribedDoc = await Subscription.create({
+    const isAlreadySubscribed = await Subscription.findOne({
       subscriber: request.user._id,
       channel: channel._id,
     });
 
-    if (!subscribedDoc) {
+    if (!isAlreadySubscribed) {
+      const subscribedDoc = await Subscription.create({
+        subscriber: request.user._id,
+        channel: channel._id,
+      });
+
+      if (!subscribedDoc) {
+        return response
+          .status(500)
+          .json(
+            new ApiError(500, "😰 Something went wrong while subscribing.")
+          );
+      }
+
       return response
-        .status(500)
-        .json(new ApiError(500, "😰 Something went wrong while subscribing."));
-    }
+        .status(200)
+        .json(new ApiResponse(200, {}, "👍 Channel subscribed."));
+    } else {
+      const deleteDoc = await Subscription.deleteOne({
+        _id: isAlreadySubscribed._id,
+      });
 
-    return response
-      .status(200)
-      .json(new ApiResponse(200, {}, "👍 Channel subscribed."));
-  } else {
-    const deleteDoc = await Subscription.deleteOne({
-      _id: isAlreadySubscribed._id,
-    });
+      if (deleteDoc.deletedCount !== 1) {
+        return response
+          .status(500)
+          .json(new ApiError(500, "😰 Error unsubscribing channel.."));
+      }
 
-    if (deleteDoc.deletedCount !== 1) {
       return response
-        .status(500)
-        .json(new ApiError(500, "😰 Error unsubscribing channel.."));
+        .status(200)
+        .json(new ApiResponse(200, {}, "👍 Channel unsubscribed."));
     }
-
-    return response
-      .status(200)
-      .json(new ApiResponse(200, {}, "👍 Channel unsubscribed."));
   }
-});
+);
 
-const getUserChannelSubscribers = asyncHandler(async (request, response) => {
-  const subscribers = await Subscription.aggregate([
-    {
-      $match: {
-        channel: new mongoose.Types.ObjectId(request.user._id),
+const getUserChannelSubscribers = asyncHandler(
+  async (request: Request, response: Response) => {
+    const subscribers = await Subscription.aggregate([
+      {
+        $match: {
+          channel: new mongoose.Types.ObjectId(request.user._id),
+        },
       },
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "subscriber",
-        foreignField: "_id",
-        as: "subscriber",
+      {
+        $lookup: {
+          from: "users",
+          localField: "subscriber",
+          foreignField: "_id",
+          as: "subscriber",
+        },
       },
-    },
-    {
-      $unwind: "$subscriber",
-    },
-    {
-      $project: {
-        fullName: "$subscriber.fullName",
-        username: "$subscriber.username",
-        avatar: "$subscriber.avatar",
+      {
+        $unwind: "$subscriber",
       },
-    },
-  ]);
+      {
+        $project: {
+          fullName: "$subscriber.fullName",
+          username: "$subscriber.username",
+          avatar: "$subscriber.avatar",
+        },
+      },
+    ]);
 
-  response
-    .status(200)
-    .json(
-      new ApiResponse(200, subscribers, "👍 Subscriber  fetched successfully.")
-    );
-});
+    response
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          subscribers,
+          "👍 Subscriber  fetched successfully."
+        )
+      );
+  }
+);
 
 const getSubscribedChannels = asyncHandler(async (request, response) => {
   const subscribedTo = await Subscription.aggregate([
