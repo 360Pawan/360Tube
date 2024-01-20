@@ -7,12 +7,12 @@ import {
   getUserPlaylists,
   removeVideoFromPlaylist,
   updatePlaylist,
-} from "../controllers/playlist.controller.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+} from "@/controllers/playlist.controller";
+import { verifyJWT } from "@/middlewares/auth.middleware";
 
 const router = Router();
 
-router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
+router.use(verifyJWT);
 
 router.route("/").post(createPlaylist);
 
