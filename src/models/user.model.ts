@@ -17,10 +17,12 @@ export interface IUser extends Document {
   watchHistory: mongoose.Types.ObjectId[];
   password: string;
   refreshToken?: string;
+  emailToken?: string;
 
   isPasswordCorrect(password: string): Promise<boolean>;
   generateAccessToken(): string;
   generateRefreshToken(): string;
+  generateEmailToken(): string;
 }
 
 const userSchema = new Schema(
@@ -64,7 +66,14 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    isVerifiedEmail: {
+      type: Boolean,
+      default: false,
+    },
     refreshToken: {
+      type: String,
+    },
+    emailToken: {
       type: String,
     },
   },
@@ -107,6 +116,12 @@ userSchema.methods.generateRefreshToken = function () {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     }
   );
+};
+
+userSchema.methods.generateEmailToken = function () {
+  return jwt.sign({ _id: this._id }, process.env.EMAIL_TOKEN_SECRET, {
+    expiresIn: process.env.EMAIL_TOKEN_EXPIRY,
+  });
 };
 
 export const User = mongoose.model<IUser>("User", userSchema);

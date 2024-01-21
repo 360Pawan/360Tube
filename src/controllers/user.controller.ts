@@ -8,6 +8,7 @@ import { ApiResponse } from "@/utils/ApiResponse";
 import { User } from "@/models/user.model";
 import { validateEmail } from "@/utils/validation";
 import { SERVER_COOKIE_OPTION } from "@/constants";
+import { sendEmail } from "@/utils/sendEmail";
 import { removeFromCloudinary, uploadOnCloudinary } from "@/utils/cloudinary";
 
 const generateAccessAndRefreshToken = async (
@@ -104,9 +105,7 @@ const registerUser = asyncHandler(
       },
     });
 
-    const createdUser = await User.findById(user._id).select(
-      "-password -refreshToken"
-    );
+    const createdUser = await User.findById(user._id).select("-password");
 
     if (!createdUser) {
       return response
@@ -118,6 +117,22 @@ const registerUser = asyncHandler(
           )
         );
     }
+
+    const emailToken = user.generateEmailToken();
+    user.emailToken = emailToken;
+
+    await user.save();
+
+    // !TODO Add email template and crete route to verify email and update db status and remove token
+
+    sendEmail({
+      subject: "Verify Email",
+      to: user.email,
+      from: process.env.GOOGLE_EMAIL,
+      html: `<p>Hey ${user.fullName}</p>
+            <p>🌻 Verify your email to continue using our services ${user.emailToken}🌻</p>
+            <p>Thank you</p>`,
+    });
 
     return response
       .status(201)
