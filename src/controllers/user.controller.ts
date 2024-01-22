@@ -130,7 +130,7 @@ const registerUser = asyncHandler(
       to: user.email,
       from: process.env.GOOGLE_EMAIL,
       html: `<p>Hey ${user.fullName}</p>
-            <p>🌻 Verify your email to continue using our services ${user.emailToken}🌻</p>
+            <p>🌻 Verify your email to continue using our services <a href="https://www.360Tube.com?token=${user.emailToken}">Verify Email</a>🌻</p>
             <p>Thank you</p>`,
     });
 
