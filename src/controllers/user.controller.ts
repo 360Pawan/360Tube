@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { Request, Response } from "express";
 
 import { asyncHandler } from "@/utils/asyncHandler";
@@ -27,6 +27,29 @@ const generateAccessAndRefreshToken = async (
   } catch (error) {
     return Promise.reject(
       new ApiError(500, "😰 Something went wrong while generating tokens.")
+    );
+  }
+};
+
+const verifyEmailToken = async (
+  emailToken: string
+): Promise<{ decodedToken: JwtPayload }> => {
+  try {
+    const decodedToken = jwt.verify(
+      emailToken as string,
+      process.env.EMAIL_TOKEN_SECRET
+    );
+
+    if (typeof decodedToken !== "object" || !decodedToken._id) {
+      return Promise.reject(
+        new ApiError(401, "😰 Token is expired or invalid.")
+      );
+    }
+
+    return { decodedToken };
+  } catch (error) {
+    return Promise.reject(
+      new ApiError(401, error?.message || "😰 Invalid email token")
     );
   }
 };
@@ -120,10 +143,7 @@ const registerUser = asyncHandler(
 
     const emailToken = user.generateEmailToken();
     user.emailToken = emailToken;
-
     await user.save();
-
-    // !TODO Add email template and crete route to verify email and update db status and remove token
 
     sendEmail({
       subject: "Verify Email",
@@ -131,6 +151,7 @@ const registerUser = asyncHandler(
       from: process.env.GOOGLE_EMAIL,
       html: `<p>Hey ${user.fullName}</p>
             <p>🌻 Verify your email to continue using our services <a href="https://www.360Tube.com?token=${user.emailToken}">Verify Email</a>🌻</p>
+            <p>${user.emailToken}</p>
             <p>Thank you</p>`,
     });
 
@@ -139,6 +160,48 @@ const registerUser = asyncHandler(
       .json(
         new ApiResponse(201, createdUser, "👍 User registered Successfully.")
       );
+  }
+);
+
+const confirmEmail = asyncHandler(
+  async (request: Request, response: Response) => {
+    const { emailToken } = request.query;
+
+    if (!emailToken || typeof emailToken !== "string") {
+      return response
+        .status(400)
+        .json(new ApiError(400, "😰 Email token is needed."));
+    }
+
+    const { decodedToken } = await verifyEmailToken(emailToken);
+
+    const user = await User.findById(decodedToken._id);
+
+    if (!user) {
+      return response
+        .status(401)
+        .json(new ApiError(401, "😰 Token is expired or invalid."));
+    }
+
+    if (user.isVerifiedEmail) {
+      return response
+        .status(400)
+        .json(new ApiError(401, "😰 Email is already verified."));
+    }
+
+    if (emailToken !== user?.emailToken) {
+      response
+        .status(401)
+        .json(new ApiError(401, "😰 Email token is expired."));
+    }
+
+    user.isVerifiedEmail = true;
+    user.emailToken = "";
+    await user.save();
+
+    return response
+      .status(201)
+      .json(new ApiResponse(200, {}, "👍 User email verified Successfully."));
   }
 );
 
@@ -582,4 +645,5 @@ export {
   updateUserCoverImage,
   getUserChannelProfile,
   getUserHistory,
+  confirmEmail,
 };

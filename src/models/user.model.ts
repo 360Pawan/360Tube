@@ -18,6 +18,7 @@ export interface IUser extends Document {
   password: string;
   refreshToken?: string;
   emailToken?: string;
+  isVerifiedEmail: boolean;
 
   isPasswordCorrect(password: string): Promise<boolean>;
   generateAccessToken(): string;
