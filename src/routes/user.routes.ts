@@ -10,6 +10,7 @@ import {
   logoutUser,
   refreshAccessToken,
   registerUser,
+  resetPassword,
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
@@ -33,6 +34,7 @@ router.route("/register").post(
   registerUser
 );
 router.route("/confirm-email").get(confirmEmail);
+router.route("/reset-password").get(resetPassword);
 router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);

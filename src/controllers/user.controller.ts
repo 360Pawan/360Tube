@@ -205,6 +205,26 @@ const confirmEmail = asyncHandler(
   }
 );
 
+// TODO Create a handler to handle forgot password
+
+const resetPassword = asyncHandler(
+  async (request: Request, response: Response) => {
+    const { email } = request.query;
+
+    if (!email) {
+      return response
+        .status(400)
+        .json(new ApiError(400, "😰 Email is needed."));
+    }
+
+    if (email && !validateEmail(email)) {
+      return response
+        .status(400)
+        .json(new ApiError(400, "😰 Email is not valid."));
+    }
+  }
+);
+
 const loginUser = asyncHandler(async (request: Request, response: Response) => {
   const { email, username, password } = request.body;
 
@@ -646,4 +666,5 @@ export {
   getUserChannelProfile,
   getUserHistory,
   confirmEmail,
+  resetPassword,
 };
