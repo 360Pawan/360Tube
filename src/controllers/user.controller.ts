@@ -222,6 +222,12 @@ const resetPassword = asyncHandler(
         .status(400)
         .json(new ApiError(400, "😰 Email is not valid."));
     }
+
+    const user = User.findOne({ email: email });
+
+    if (!user) {
+      return response.status(404).json(new ApiError(404, "😰 No user found."));
+    }
   }
 );
 
